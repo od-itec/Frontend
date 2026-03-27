@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import mascotIcon from "../assets/testimoniale-icon.svg";
 import "./LoginPage.css";
 
 function EyeIcon() {
@@ -70,25 +71,82 @@ function EyeOffIcon() {
   );
 }
 
+function SunIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true" className="theme-icon">
+      <circle cx="12" cy="12" r="4.5" fill="none" stroke="currentColor" strokeWidth="1.8" />
+      <path
+        d="M12 2.5v2.5M12 19v2.5M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M2.5 12H5M19 12h2.5M4.9 19.1l1.8-1.8M17.3 6.7l1.8-1.8"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
+function MoonIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true" className="theme-icon">
+      <path
+        d="M20 14.4A8.8 8.8 0 1 1 9.6 4a7.1 7.1 0 0 0 10.4 10.4Z"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
 export default function Login() {
   const navigate = useNavigate();
-
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [theme, setTheme] = useState("sky");
 
   const handleSubmit = (e) => {
     e.preventDefault();
-
     console.log("Email:", email);
     console.log("Password:", password);
-
     navigate("/workspace");
   };
 
   return (
-    <div className="login-page theme-sky">
+    <div className={`login-page theme-${theme}`}>
+      <div className="login-theme-toggle" role="group" aria-label="Theme switcher">
+        <button
+          type="button"
+          className={`theme-option ${theme === "sky" ? "is-active" : ""}`}
+          onClick={() => setTheme("sky")}
+          aria-label="Switch to light theme"
+          aria-pressed={theme === "sky"}
+        >
+          <SunIcon />
+        </button>
+        <button
+          type="button"
+          className={`theme-option ${theme === "graphite" ? "is-active" : ""}`}
+          onClick={() => setTheme("graphite")}
+          aria-label="Switch to dark theme"
+          aria-pressed={theme === "graphite"}
+        >
+          <MoonIcon />
+        </button>
+      </div>
+
       <div className="login-card">
+        <div className="login-mascot-shell" aria-hidden="true">
+          <img
+            src={mascotIcon}
+            alt=""
+            className="login-mascot-image"
+          />
+        </div>
+
         <h2 className="login-title">Welcome Back</h2>
         <p className="login-subtitle">Log in to your account</p>
 
