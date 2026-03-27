@@ -14,4 +14,4 @@ COPY --link . .
 RUN chown -R node:node /runtime
 USER node
 EXPOSE 5173
-ENTRYPOINT [ "npm", "run", "dev", "--", "--host" ]
+ENTRYPOINT [ "npm", "run", "dev" ]

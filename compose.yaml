@@ -1,3 +1,4 @@
 services:
   itecify:
     build: .
+    network_mode: host
