@@ -1,9 +1,45 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Sidebar from "./Sidebar";
 import Editor from "./Editor";
 import "./WorkspaceLayout.css";
 
+const THEME_STORAGE_KEY = "itec-theme";
+
+function SunIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true" className="workspace-theme-icon">
+      <circle cx="12" cy="12" r="4.5" fill="none" stroke="currentColor" strokeWidth="1.8" />
+      <path
+        d="M12 2.5v2.5M12 19v2.5M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M2.5 12H5M19 12h2.5M4.9 19.1l1.8-1.8M17.3 6.7l1.8-1.8"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
+function MoonIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true" className="workspace-theme-icon">
+      <path
+        d="M20 14.4A8.8 8.8 0 1 1 9.6 4a7.1 7.1 0 0 0 10.4 10.4Z"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
 function WorkspaceLayout() {
+  const [theme, setTheme] = useState(() => {
+    if (typeof window === "undefined") return "sky";
+    return localStorage.getItem(THEME_STORAGE_KEY) || "sky";
+  });
   const [items, setItems] = useState([]);
   const [activeFileId, setActiveFileId] = useState(null);
   const [draftItemId, setDraftItemId] = useState(null);
@@ -12,6 +48,10 @@ function WorkspaceLayout() {
   const activeFile = useMemo(() => {
     return findItemById(items, activeFileId);
   }, [items, activeFileId]);
+
+  useEffect(() => {
+    localStorage.setItem(THEME_STORAGE_KEY, theme);
+  }, [theme]);
 
   const handleCreateFile = (parentId = null) => {
     const newFile = {
@@ -173,7 +213,28 @@ function WorkspaceLayout() {
   };
 
   return (
-    <div className="workspace-shell">
+    <div className={`workspace-shell theme-${theme}`}>
+      <div className="workspace-theme-toggle" role="group" aria-label="Theme switcher">
+        <button
+          type="button"
+          className={`workspace-theme-option ${theme === "sky" ? "is-active" : ""}`}
+          onClick={() => setTheme("sky")}
+          aria-label="Switch to light theme"
+          aria-pressed={theme === "sky"}
+        >
+          <SunIcon />
+        </button>
+        <button
+          type="button"
+          className={`workspace-theme-option ${theme === "graphite" ? "is-active" : ""}`}
+          onClick={() => setTheme("graphite")}
+          aria-label="Switch to dark theme"
+          aria-pressed={theme === "graphite"}
+        >
+          <MoonIcon />
+        </button>
+      </div>
+
       <Sidebar
         items={items}
         activeFileId={activeFileId}
