@@ -3,6 +3,8 @@ import { useNavigate } from "react-router-dom";
 import mascotIcon from "../assets/testimoniale-icon.svg";
 import "./LoginPage.css";
 
+const THEME_STORAGE_KEY = "itec-theme";
+
 function EyeIcon() {
   return (
     <svg
@@ -106,7 +108,14 @@ export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [theme, setTheme] = useState("sky");
+  const [theme, setTheme] = useState(() => {
+    if (typeof window === "undefined") return "sky";
+    return localStorage.getItem(THEME_STORAGE_KEY) || "sky";
+  });
+
+  React.useEffect(() => {
+    localStorage.setItem(THEME_STORAGE_KEY, theme);
+  }, [theme]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
