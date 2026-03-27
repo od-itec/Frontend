@@ -1,0 +1,109 @@
+.workspace-shell {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  background: #1e1e1e;
+  color: #d4d4d4;
+  overflow: hidden;
+}
+
+.sidebar {
+  width: 280px;
+  min-width: 280px;
+  background: #181818;
+  border-right: 1px solid #2a2a2a;
+  display: flex;
+  flex-direction: column;
+}
+
+.sidebar-header {
+  padding: 14px 16px 10px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #bbbbbb;
+  letter-spacing: 0.08em;
+}
+
+.sidebar-section {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.sidebar-section-title {
+  padding: 8px 16px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #cfcfcf;
+  border-top: 1px solid #232323;
+  border-bottom: 1px solid #232323;
+}
+
+.empty-explorer {
+  padding: 20px 16px;
+  color: #9d9d9d;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.empty-explorer p {
+  margin: 0 0 8px;
+  color: #d4d4d4;
+  font-weight: 500;
+}
+
+.empty-explorer span {
+  color: #8a8a8a;
+}
+
+.editor-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  background: #1e1e1e;
+}
+
+.tabs-bar {
+  height: 42px;
+  display: flex;
+  align-items: center;
+  background: #181818;
+  border-bottom: 1px solid #2a2a2a;
+  padding: 0 8px;
+}
+
+.tab {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+  font-size: 13px;
+  color: #ffffff;
+  border-right: 1px solid #2a2a2a;
+  background: #1e1e1e;
+}
+
+.editor-wrapper {
+  flex: 1;
+  padding: 16px;
+  overflow: hidden;
+}
+
+.code-editor {
+  width: 100%;
+  height: 100%;
+  resize: none;
+  border: none;
+  outline: none;
+  background: #1e1e1e;
+  color: #d4d4d4;
+  font-family: "Consolas", "Courier New", monospace;
+  font-size: 14px;
+  line-height: 1.6;
+  padding: 0;
+}
+
+.code-editor::placeholder {
+  color: #6f6f6f;
+}
