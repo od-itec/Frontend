@@ -6,6 +6,7 @@ function Sidebar({
   renamingItemId,
   onCreateFile,
   onCreateFolder,
+  onDeleteItem,
   onSelectFile,
   onToggleFolder,
   onRenameDraftItem,
@@ -33,12 +34,12 @@ function Sidebar({
         </button>
 
         <button
-          className="icon-button folder-create-button"
+          className="icon-button"
           onClick={() => onCreateFolder(null)}
           title="New Folder"
           aria-label="Create new folder"
         >
-          <span className="folder-icon small" aria-hidden="true"/>
+          🗀
         </button>
       </div>
 
@@ -58,6 +59,7 @@ function Sidebar({
               renamingItemId={renamingItemId}
               onCreateFile={onCreateFile}
               onCreateFolder={onCreateFolder}
+              onDeleteItem={onDeleteItem}
               onSelectFile={onSelectFile}
               onToggleFolder={onToggleFolder}
               onRenameDraftItem={onRenameDraftItem}
@@ -83,6 +85,7 @@ function TreeItem(props) {
     renamingItemId,
     onCreateFile,
     onCreateFolder,
+    onDeleteItem,
     onSelectFile,
     onToggleFolder,
     onRenameDraftItem,
@@ -131,7 +134,7 @@ function TreeItem(props) {
             onDoubleClick={() => onStartRenamingItem(item.id)}
           >
             <span className="folder-chevron">{item.isExpanded ? "▾" : "▸"}</span>
-            <span className="folder-icon" aria-hidden="true" />
+            <span className="file-item-icon">🗀</span>
             <span className="file-item-name">{item.name}</span>
           </button>
 
@@ -144,12 +147,18 @@ function TreeItem(props) {
               +
             </button>
             <button
-              className="icon-button folder-create-button"
+              className="mini-action"
+              title="New folder"
               onClick={() => onCreateFolder(item.id)}
-              title="New Folder"
-              aria-label="Create new folder"
             >
-              <span className="folder-icon small" aria-hidden="true"/>
+              🗀
+            </button>
+            <button
+              className="mini-action delete-action"
+              title="Delete folder"
+              onClick={() => onDeleteItem(item.id)}
+            >
+              ×
             </button>
           </div>
         </div>
@@ -168,15 +177,29 @@ function TreeItem(props) {
   }
 
   return (
-    <button
-      className={`file-item ${item.id === activeFileId ? "active" : ""}`}
+    <div
+      className={`file-row ${item.id === activeFileId ? "active" : ""}`}
       style={{ paddingLeft: `${16 + level * 16}px` }}
-      onClick={() => onSelectFile(item.id)}
-      onDoubleClick={() => onStartRenamingItem(item.id)}
     >
-      <span className="file-item-icon">📄</span>
-      <span className="file-item-name">{item.name}</span>
-    </button>
+      <button
+        className={`file-item ${item.id === activeFileId ? "active" : ""}`}
+        onClick={() => onSelectFile(item.id)}
+        onDoubleClick={() => onStartRenamingItem(item.id)}
+      >
+        <span className="file-item-icon">📄</span>
+        <span className="file-item-name">{item.name}</span>
+      </button>
+
+      <div className="tree-item-actions visible-on-row-hover">
+        <button
+          className="mini-action delete-action"
+          title="Delete file"
+          onClick={() => onDeleteItem(item.id)}
+        >
+          ×
+        </button>
+      </div>
+    </div>
   );
 }
 
@@ -204,11 +227,7 @@ function DraftItem({ item, level, onRenameDraftItem, onConfirmDraftItem, onCance
       className="file-item draft"
       style={{ paddingLeft: `${16 + level * 16}px` }}
     >
-      {item.type === "folder" ? (
-        <span className="folder-icon" aria-hidden="true" />
-      ) : (
-        <span className="file-item-icon">📄</span>
-      )}
+      <span className="file-item-icon">{item.type === "folder" ? "🗀" : "📄"}</span>
       <input
         ref={inputRef}
         className="file-item-input"
@@ -248,7 +267,7 @@ function RenameItem({ item, level, onRenameItemChange, onConfirmRenameItem, onCa
       className="file-item draft active"
       style={{ paddingLeft: `${16 + level * 16}px` }}
     >
-      <span className="folder-icon" aria-hidden="true" />
+      <span className="file-item-icon">{item.type === "folder" ? "🗀" : "📄"}</span>
       <input
         ref={inputRef}
         className="file-item-input"
