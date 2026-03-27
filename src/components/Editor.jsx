@@ -41,6 +41,7 @@ function Editor({ activeFile, updateActiveFile }) {
   const highlightedRef = useRef(null);
   const highlightScrollRef = useRef(null);
   const lineNumbersRef = useRef(null);
+  const lastLoggedCodeRef = useRef("");
 
   const code = activeFile?.content ?? "";
   const language = useMemo(
@@ -74,6 +75,24 @@ function Editor({ activeFile, updateActiveFile }) {
       highlightedRef.current.innerHTML = escapedCode;
     }
   }, [code, language]);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if(!activeFile) return;
+
+      if(code != lastLoggedCodeRef.current) {
+        console.log("[Editor change]", {
+          fileName: activeFile.name,
+          language: activeFile.language,
+          content: code,
+        });
+
+        lastLoggedCodeRef.current = code;
+      }
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [code, activeFile]);
 
   const handleChange = (e) => {
     if (!activeFile) return;
