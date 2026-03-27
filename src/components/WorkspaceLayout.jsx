@@ -42,6 +42,14 @@ function WorkspaceLayout() {
     setDraftItemId(newFolder.id);
   };
 
+  const handleDeleteItem = (itemId) => {
+    setItems((prev) => removeItemById(prev, itemId));
+
+    setActiveFileId((prev) => (containsItemId(items, itemId, prev) ? null : prev));
+    setDraftItemId((prev) => (prev === itemId ? null : prev));
+    setRenamingItemId((prev) => (prev === itemId ? null : prev));
+  };
+
   const handleSelectFile = (fileId) => {
     setActiveFileId(fileId);
   };
@@ -173,6 +181,7 @@ function WorkspaceLayout() {
         renamingItemId={renamingItemId}
         onCreateFile={handleCreateFile}
         onCreateFolder={handleCreateFolder}
+        onDeleteItem={handleDeleteItem}
         onSelectFile={handleSelectFile}
         onToggleFolder={handleToggleFolder}
         onRenameDraftItem={handleRenameDraftItem}
@@ -201,6 +210,21 @@ function findItemById(items, id) {
     }
   }
   return null;
+}
+
+function containsItemId(items, deletedItemId, searchedId) {
+  if (!searchedId) return false;
+
+  const deletedItem = findItemById(items, deletedItemId);
+  if (!deletedItem) return false;
+
+  return subtreeContainsId(deletedItem, searchedId);
+}
+
+function subtreeContainsId(item, searchedId) {
+  if (item.id === searchedId) return true;
+  if (item.type !== "folder") return false;
+  return item.children.some((child) => subtreeContainsId(child, searchedId));
 }
 
 function insertItem(items, parentId, newItem) {
