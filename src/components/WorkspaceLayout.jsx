@@ -4,51 +4,91 @@ import Editor from "./Editor";
 import "./WorkspaceLayout.css";
 
 function WorkspaceLayout() {
-  const [files, setFiles] = useState([]);
+  const [items, setItems] = useState([]);
   const [activeFileId, setActiveFileId] = useState(null);
-  const [draftFileId, setDraftFileId] = useState(null);
-  const [renamingFileId, setRenamingFileId] = useState(null);
+  const [draftItemId, setDraftItemId] = useState(null);
+  const [renamingItemId, setRenamingItemId] = useState(null);
 
   const activeFile = useMemo(() => {
-    return files.find((file) => file.id === activeFileId) ?? null;
-  }, [files, activeFileId]);
+    return findItemById(items, activeFileId);
+  }, [items, activeFileId]);
 
-  const handleCreateFile = () => {
+  const handleCreateFile = (parentId = null) => {
     const newFile = {
       id: crypto.randomUUID(),
+      type: "file",
       name: "",
       content: "",
       language: "Plain Text",
       isDraft: true,
     };
 
-    setFiles((prev) => [...prev, newFile]);
+    setItems((prev) => insertItem(prev, parentId, newFile));
     setActiveFileId(newFile.id);
-    setDraftFileId(newFile.id);
+    setDraftItemId(newFile.id);
+  };
+
+  const handleCreateFolder = (parentId = null) => {
+    const newFolder = {
+      id: crypto.randomUUID(),
+      type: "folder",
+      name: "",
+      isDraft: true,
+      isExpanded: true,
+      children: [],
+    };
+
+    setItems((prev) => insertItem(prev, parentId, newFolder));
+    setDraftItemId(newFolder.id);
+  };
+
+  const handleDeleteItem = (itemId) => {
+    setItems((prev) => removeItemById(prev, itemId));
+
+    setActiveFileId((prev) => (containsItemId(items, itemId, prev) ? null : prev));
+    setDraftItemId((prev) => (prev === itemId ? null : prev));
+    setRenamingItemId((prev) => (prev === itemId ? null : prev));
   };
 
   const handleSelectFile = (fileId) => {
     setActiveFileId(fileId);
   };
 
-  const handleRenameDraftFile = (fileId, nextName) => {
-    setFiles((prev) =>
-      prev.map((file) =>
-        file.id === fileId ? { ...file, name: nextName } : file
-      )
+  const handleToggleFolder = (folderId) => {
+    setItems((prev) =>
+      updateItemById(prev, folderId, (item) => ({
+        ...item,
+        isExpanded: !item.isExpanded,
+      }))
     );
   };
 
-  const handleConfirmDraftFile = (fileId) => {
-    setFiles((prev) =>
-      prev.map((file) => {
-        if (file.id !== fileId) return file;
+  const handleRenameDraftItem = (itemId, nextName) => {
+    setItems((prev) =>
+      updateItemById(prev, itemId, (item) => ({
+        ...item,
+        name: nextName,
+      }))
+    );
+  };
 
-        const trimmedName = file.name.trim();
-        const finalName = trimmedName || "untitled.txt";
+  const handleConfirmDraftItem = (itemId) => {
+    setItems((prev) =>
+      updateItemById(prev, itemId, (item) => {
+        const trimmedName = item.name.trim();
+        const fallbackName = item.type === "folder" ? "new-folder" : "untitled.txt";
+        const finalName = trimmedName || fallbackName;
+
+        if (item.type === "folder") {
+          return {
+            ...item,
+            name: finalName,
+            isDraft: false,
+          };
+        }
 
         return {
-          ...file,
+          ...item,
           name: finalName,
           isDraft: false,
           language: inferLanguageFromFileName(finalName),
@@ -56,95 +96,192 @@ function WorkspaceLayout() {
       })
     );
 
-    setDraftFileId((prev) => (prev === fileId ? null : prev));
+    setDraftItemId((prev) => (prev === itemId ? null : prev));
   };
 
-  const handleCancelDraftFile = (fileId) => {
-    setFiles((prev) => prev.filter((file) => file.id !== fileId));
-    setActiveFileId((prev) => (prev === fileId ? null : prev));
-    setDraftFileId((prev) => (prev === fileId ? null : prev));
+  const handleCancelDraftItem = (itemId) => {
+    setItems((prev) => removeItemById(prev, itemId));
+    setActiveFileId((prev) => (prev === itemId ? null : prev));
+    setDraftItemId((prev) => (prev === itemId ? null : prev));
   };
 
-  const handleStartRenamingFile = (fileId) => {
-    setRenamingFileId(fileId);
+  const handleStartRenamingItem = (itemId) => {
+    setRenamingItemId(itemId);
   };
 
-  const handleRenameFileChange = (fileId, nextName) => {
-    setFiles((prev) =>
-      prev.map((file) =>
-        file.id === fileId ? { ...file, name: nextName } : file
-      )
+  const handleRenameItemChange = (itemId, nextName) => {
+    setItems((prev) =>
+      updateItemById(prev, itemId, (item) => ({
+        ...item,
+        name: nextName,
+      }))
     );
   };
 
-  const handleConfirmRenameFile = (fileId) => {
-    setFiles((prev) =>
-      prev.map((file) => {
-        if (file.id !== fileId) return file;
+  const handleConfirmRenameItem = (itemId) => {
+    setItems((prev) =>
+      updateItemById(prev, itemId, (item) => {
+        const trimmedName = item.name.trim();
+        const fallbackName = item.type === "folder" ? "new-folder" : "untitled.txt";
+        const finalName = trimmedName || fallbackName;
 
-        const trimmedName = file.name.trim();
-        const finalName = trimmedName || "untitled.txt";
+        if (item.type === "folder") {
+          return {
+            ...item,
+            name: finalName,
+          };
+        }
 
         return {
-          ...file,
+          ...item,
           name: finalName,
           language: inferLanguageFromFileName(finalName),
         };
       })
     );
 
-    setRenamingFileId((prev) => (prev === fileId ? null : prev));
+    setRenamingItemId((prev) => (prev === itemId ? null : prev));
   };
 
-  const handleCancelRenameFile = (fileId, previousName) => {
-    setFiles((prev) =>
-      prev.map((file) =>
-        file.id === fileId
-          ? {
-              ...file,
-              name: previousName,
-              language: inferLanguageFromFileName(previousName),
-            }
-          : file
-      )
+  const handleCancelRenameItem = (itemId, previousName) => {
+    setItems((prev) =>
+      updateItemById(prev, itemId, (item) => {
+        if (item.type === "folder") {
+          return {
+            ...item,
+            name: previousName,
+          };
+        }
+
+        return {
+          ...item,
+          name: previousName,
+          language: inferLanguageFromFileName(previousName),
+        };
+      })
     );
 
-    setRenamingFileId((prev) => (prev === fileId ? null : prev));
+    setRenamingItemId((prev) => (prev === itemId ? null : prev));
   };
 
   const handleUpdateActiveFile = (updater) => {
-    setFiles((prev) =>
-      prev.map((file) => {
-        if (file.id !== activeFileId) return file;
-        return typeof updater === "function" ? updater(file) : { ...file, ...updater };
-      })
+    setItems((prev) =>
+      updateItemById(prev, activeFileId, (item) =>
+        typeof updater === "function" ? updater(item) : { ...item, ...updater }
+      )
     );
   };
 
   return (
     <div className="workspace-shell">
       <Sidebar
-        files={files}
+        items={items}
         activeFileId={activeFileId}
-        draftFileId={draftFileId}
-        renamingFileId={renamingFileId}
+        draftItemId={draftItemId}
+        renamingItemId={renamingItemId}
         onCreateFile={handleCreateFile}
+        onCreateFolder={handleCreateFolder}
+        onDeleteItem={handleDeleteItem}
         onSelectFile={handleSelectFile}
-        onRenameDraftFile={handleRenameDraftFile}
-        onConfirmDraftFile={handleConfirmDraftFile}
-        onCancelDraftFile={handleCancelDraftFile}
-        onStartRenamingFile={handleStartRenamingFile}
-        onRenameFileChange={handleRenameFileChange}
-        onConfirmRenameFile={handleConfirmRenameFile}
-        onCancelRenameFile={handleCancelRenameFile}
+        onToggleFolder={handleToggleFolder}
+        onRenameDraftItem={handleRenameDraftItem}
+        onConfirmDraftItem={handleConfirmDraftItem}
+        onCancelDraftItem={handleCancelDraftItem}
+        onStartRenamingItem={handleStartRenamingItem}
+        onRenameItemChange={handleRenameItemChange}
+        onConfirmRenameItem={handleConfirmRenameItem}
+        onCancelRenameItem={handleCancelRenameItem}
       />
 
       <Editor
-        activeFile={activeFile}
+        activeFile={activeFile?.type === "file" ? activeFile : null}
         updateActiveFile={handleUpdateActiveFile}
       />
     </div>
   );
+}
+
+function findItemById(items, id) {
+  for (const item of items) {
+    if (item.id === id) return item;
+    if (item.type === "folder") {
+      const found = findItemById(item.children, id);
+      if (found) return found;
+    }
+  }
+  return null;
+}
+
+function containsItemId(items, deletedItemId, searchedId) {
+  if (!searchedId) return false;
+
+  const deletedItem = findItemById(items, deletedItemId);
+  if (!deletedItem) return false;
+
+  return subtreeContainsId(deletedItem, searchedId);
+}
+
+function subtreeContainsId(item, searchedId) {
+  if (item.id === searchedId) return true;
+  if (item.type !== "folder") return false;
+  return item.children.some((child) => subtreeContainsId(child, searchedId));
+}
+
+function insertItem(items, parentId, newItem) {
+  if (parentId === null) {
+    return [...items, newItem];
+  }
+
+  return items.map((item) => {
+    if (item.id === parentId && item.type === "folder") {
+      return {
+        ...item,
+        isExpanded: true,
+        children: [...item.children, newItem],
+      };
+    }
+
+    if (item.type === "folder") {
+      return {
+        ...item,
+        children: insertItem(item.children, parentId, newItem),
+      };
+    }
+
+    return item;
+  });
+}
+
+function updateItemById(items, itemId, updater) {
+  return items.map((item) => {
+    if (item.id === itemId) {
+      return updater(item);
+    }
+
+    if (item.type === "folder") {
+      return {
+        ...item,
+        children: updateItemById(item.children, itemId, updater),
+      };
+    }
+
+    return item;
+  });
+}
+
+function removeItemById(items, itemId) {
+  return items
+    .filter((item) => item.id !== itemId)
+    .map((item) => {
+      if (item.type === "folder") {
+        return {
+          ...item,
+          children: removeItemById(item.children, itemId),
+        };
+      }
+
+      return item;
+    });
 }
 
 function inferLanguageFromFileName(fileName) {
@@ -158,6 +295,17 @@ function inferLanguageFromFileName(fileName) {
   if (lower.endsWith(".css")) return "CSS";
   if (lower.endsWith(".html")) return "HTML";
   if (lower.endsWith(".json")) return "JSON";
+  if (lower.endsWith(".c") || lower.endsWith(".h")) return "C";
+  if (
+    lower.endsWith(".cc") ||
+    lower.endsWith(".cpp") ||
+    lower.endsWith(".cxx") ||
+    lower.endsWith(".hpp") ||
+    lower.endsWith(".hh") ||
+    lower.endsWith(".hxx")
+  ) {
+    return "C++";
+  }
 
   return "Plain Text";
 }
