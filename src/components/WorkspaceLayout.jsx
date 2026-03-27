@@ -158,6 +158,17 @@ function inferLanguageFromFileName(fileName) {
   if (lower.endsWith(".css")) return "CSS";
   if (lower.endsWith(".html")) return "HTML";
   if (lower.endsWith(".json")) return "JSON";
+  if (lower.endsWith(".c") || lower.endsWith(".h")) return "C";
+  if (
+    lower.endsWith(".cc") ||
+    lower.endsWith(".cpp") ||
+    lower.endsWith(".cxx") ||
+    lower.endsWith(".hpp") ||
+    lower.endsWith(".hh") ||
+    lower.endsWith(".hxx")
+  ) {
+    return "C++";
+  }
 
   return "Plain Text";
 }
