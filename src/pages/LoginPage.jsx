@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import "./LoginPage.css";
 
 function EyeIcon() {
@@ -70,14 +71,19 @@ function EyeOffIcon() {
 }
 
 export default function Login() {
+  const navigate = useNavigate();
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
 
   const handleSubmit = (e) => {
     e.preventDefault();
+
     console.log("Email:", email);
     console.log("Password:", password);
+
+    navigate("/workspace");
   };
 
   return (
