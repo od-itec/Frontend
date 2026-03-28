@@ -931,6 +931,7 @@
 }
 
 .sidebar-user-section {
+  position: relative;
   padding: 10px 12px 12px;
   border-top: 1px solid var(--ws-panel-border);
 }
@@ -982,4 +983,138 @@
 .sidebar-user-email {
   font-size: 11px;
   color: var(--ws-muted-text);
+}
+
+.sidebar-open-invite {
+  margin-top: 10px;
+  width: 100%;
+  height: 32px;
+  border: 1px solid var(--ws-input-border);
+  border-radius: 8px;
+  background: var(--ws-hover-bg);
+  color: var(--ws-shell-text);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.sidebar-open-invite:hover {
+  background: var(--ws-active-bg);
+}
+
+.sidebar-invite-overlay {
+  position: absolute;
+  inset: 0;
+  border-radius: 8px;
+  background: rgba(15, 23, 42, 0.38);
+  display: flex;
+  align-items: flex-end;
+  padding: 10px;
+  z-index: 4;
+}
+
+.sidebar-invite-box {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid var(--ws-panel-border);
+  border-radius: 10px;
+  background: var(--ws-sidebar-bg);
+  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.2);
+}
+
+.sidebar-invite-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.sidebar-invite-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--ws-shell-text);
+}
+
+.sidebar-invite-close {
+  width: 24px;
+  height: 24px;
+  border: 1px solid var(--ws-input-border);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--ws-soft-text);
+  cursor: pointer;
+  line-height: 1;
+  font-size: 16px;
+}
+
+.sidebar-invite-close:hover {
+  background: var(--ws-hover-bg);
+}
+
+.sidebar-invite-input,
+.sidebar-invite-select,
+.sidebar-invite-link {
+  width: 100%;
+  height: 30px;
+  border: 1px solid var(--ws-input-border);
+  border-radius: 8px;
+  background: var(--ws-input-bg);
+  color: var(--ws-shell-text);
+  font-size: 12px;
+  padding: 0 9px;
+  outline: none;
+}
+
+.sidebar-invite-input:focus,
+.sidebar-invite-select:focus,
+.sidebar-invite-link:focus {
+  border-color: var(--ws-accent);
+}
+
+.sidebar-invite-row,
+.sidebar-invite-link-row {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.sidebar-invite-select {
+  flex: 1;
+}
+
+.sidebar-invite-button,
+.sidebar-invite-copy {
+  height: 30px;
+  border: 1px solid var(--ws-input-border);
+  border-radius: 8px;
+  background: var(--ws-hover-bg);
+  color: var(--ws-shell-text);
+  font-size: 12px;
+  font-weight: 600;
+  padding: 0 10px;
+  cursor: pointer;
+}
+
+.sidebar-invite-button:hover,
+.sidebar-invite-copy:hover {
+  background: var(--ws-active-bg);
+}
+
+.sidebar-invite-link {
+  flex: 1;
+  color: var(--ws-muted-text);
+}
+
+.sidebar-invite-note,
+.sidebar-invite-message {
+  font-size: 11px;
+  margin-top: 8px;
+}
+
+.sidebar-invite-note {
+  color: var(--ws-muted-text);
+}
+
+.sidebar-invite-message {
+  color: var(--ws-soft-text);
 }
