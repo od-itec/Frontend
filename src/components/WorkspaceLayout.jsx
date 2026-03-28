@@ -1,4 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { logout } from "../api";
 import Sidebar from "./Sidebar";
 import Editor from "./Editor";
 import "./WorkspaceLayout.css";
@@ -37,6 +39,7 @@ function MoonIcon() {
 }
 
 function WorkspaceLayout() {
+  const navigate = useNavigate();
   const [theme, setTheme] = useState(() => {
     if (typeof window === "undefined") return "sky";
     return localStorage.getItem(THEME_STORAGE_KEY) || "sky";
@@ -316,6 +319,19 @@ const handleImportItemsIntoFolder = async (folderId, dataTransfer) => {
           aria-pressed={theme === "graphite"}
         >
           <MoonIcon />
+        </button>
+        <button
+          type="button"
+          className="workspace-theme-option workspace-logout-btn"
+          onClick={() => { logout(); navigate("/login"); }}
+          aria-label="Log out"
+          title="Log out"
+        >
+          <svg viewBox="0 0 24 24" aria-hidden="true" className="workspace-theme-icon">
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+            <polyline points="16 17 21 12 16 7" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+            <line x1="21" y1="12" x2="9" y2="12" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
         </button>
       </div>
 
