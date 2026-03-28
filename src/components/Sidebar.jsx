@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 
 function Sidebar({
+  currentUser,
   items,
   activeFileId,
   renamingItemId,
@@ -119,6 +120,22 @@ function Sidebar({
             ))}
           </div>
         )}
+      </div>
+
+      <div className="sidebar-user-section">
+        <div className="sidebar-user-chip" title={currentUser?.email || "Not signed in"}>
+          <div className="sidebar-user-avatar">
+            {(currentUser?.username || currentUser?.email || "U").slice(0, 1).toUpperCase()}
+          </div>
+          <div className="sidebar-user-meta">
+            <div className="sidebar-user-name">
+              @{currentUser?.username || currentUser?.email?.split("@")[0] || "user"}
+            </div>
+            <div className="sidebar-user-email">
+              {currentUser?.email || "no-email"}
+            </div>
+          </div>
+        </div>
       </div>
     </aside>
   );
