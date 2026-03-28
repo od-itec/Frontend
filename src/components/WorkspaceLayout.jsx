@@ -470,6 +470,7 @@ const handleImportItemsIntoFolder = async (folderId, dataTransfer) => {
       <EditorWithTerminal
         activeFile={activeFile?.type === "file" ? activeFile : null}
         updateActiveFile={handleUpdateActiveFile}
+        theme={theme}
       />
     </div>
   );
