@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { logout, loadFiles, saveTree } from "../api";
+import { fetchMe, logout, loadFiles, saveTree } from "../api";
 import { flattenTree, buildTree } from "../fileTreeUtils";
 import Sidebar from "./Sidebar";
 import Editor from "./Editor";
@@ -51,6 +51,7 @@ function WorkspaceLayout() {
   const [renamingItemId, setRenamingItemId] = useState(null);
   const [loading, setLoading] = useState(true);
   const [saveStatus, setSaveStatus] = useState("saved"); // "saved" | "saving" | "dirty"
+  const [currentUser, setCurrentUser] = useState(null);
 
   const dirtyRef = useRef(false);
   const itemsRef = useRef(items);
@@ -82,6 +83,14 @@ function WorkspaceLayout() {
         initialLoadDone.current = true;
       })
       .finally(() => setLoading(false));
+  }, []);
+
+  useEffect(() => {
+    fetchMe()
+      .then((user) => setCurrentUser(user))
+      .catch((err) => {
+        console.error("Failed to load current user:", err);
+      });
   }, []);
 
   // Mark dirty when items change (skip initial load)
@@ -434,6 +443,7 @@ const handleImportItemsIntoFolder = async (folderId, dataTransfer) => {
       </div>
 
       <Sidebar
+        currentUser={currentUser}
         items={items}
         activeFileId={activeFileId}
         draftItemId={draftItemId}
