@@ -55,3 +55,55 @@ export function logout() {
 export function getToken() {
   return localStorage.getItem("access_token");
 }
+
+function authHeaders() {
+  return { Authorization: `Bearer ${getToken()}` };
+}
+
+// --- File API ---
+
+export async function loadFiles() {
+  const res = await fetch(`${API_BASE}/files`, {
+    headers: authHeaders(),
+  });
+  if (!res.ok) throw new Error("Failed to load files");
+  return res.json();
+}
+
+export async function saveTree(flatItems) {
+  const res = await fetch(`${API_BASE}/files`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json", ...authHeaders() },
+    body: JSON.stringify({ items: flatItems }),
+  });
+  if (!res.ok) throw new Error("Failed to save files");
+  return res.json();
+}
+
+export async function createFileApi(item) {
+  const res = await fetch(`${API_BASE}/files`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...authHeaders() },
+    body: JSON.stringify(item),
+  });
+  if (!res.ok) throw new Error("Failed to create file");
+  return res.json();
+}
+
+export async function updateFileApi(fileId, updates) {
+  const res = await fetch(`${API_BASE}/files/${fileId}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json", ...authHeaders() },
+    body: JSON.stringify(updates),
+  });
+  if (!res.ok) throw new Error("Failed to update file");
+  return res.json();
+}
+
+export async function deleteFileApi(fileId) {
+  const res = await fetch(`${API_BASE}/files/${fileId}`, {
+    method: "DELETE",
+    headers: authHeaders(),
+  });
+  if (!res.ok && res.status !== 204) throw new Error("Failed to delete file");
+}
