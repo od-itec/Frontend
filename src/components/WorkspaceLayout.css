@@ -825,3 +825,66 @@
   min-height: 0;
   overflow: auto;
 }
+
+/* ── Deploy button ── */
+.workspace-deploy-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ── Build logs overlay ── */
+.build-logs-overlay {
+  position: fixed;
+  bottom: 0;
+  right: 0;
+  width: 480px;
+  max-height: 50vh;
+  background: var(--ws-sidebar-bg, #111827);
+  border: 1px solid var(--ws-panel-border, #1f2937);
+  border-right: none;
+  border-bottom: none;
+  border-radius: 8px 0 0 0;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  box-shadow: -2px -2px 12px rgba(0, 0, 0, 0.4);
+}
+
+.build-logs-header {
+  display: flex;
+  align-items: center;
+  padding: 8px 12px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ws-soft-text, #cbd5e1);
+  border-bottom: 1px solid var(--ws-panel-border, #1f2937);
+  background: var(--ws-tab-bg, #111827);
+  border-radius: 8px 0 0 0;
+}
+
+.build-logs-close {
+  margin-left: auto;
+  background: none;
+  border: none;
+  color: var(--ws-muted-text, #9ca3af);
+  font-size: 16px;
+  cursor: pointer;
+  padding: 0 4px;
+}
+
+.build-logs-close:hover {
+  color: var(--ws-shell-text, #d4d4d4);
+}
+
+.build-logs-content {
+  flex: 1;
+  overflow: auto;
+  padding: 8px 12px;
+  margin: 0;
+  font-family: Consolas, "Courier New", monospace;
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--ws-muted-text, #9ca3af);
+  white-space: pre-wrap;
+  word-break: break-all;
+}

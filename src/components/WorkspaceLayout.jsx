@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { logout, loadFiles, saveTree } from "../api";
+import { logout, loadFiles, saveTree, triggerBuild, getBuildStatus, runDeploy, getDeployStatus, syncWorkspace, getToken } from "../api";
 import { flattenTree, buildTree } from "../fileTreeUtils";
 import Sidebar from "./Sidebar";
 import Editor from "./Editor";
@@ -51,6 +51,10 @@ function WorkspaceLayout() {
   const [renamingItemId, setRenamingItemId] = useState(null);
   const [loading, setLoading] = useState(true);
   const [saveStatus, setSaveStatus] = useState("saved"); // "saved" | "saving" | "dirty"
+  const [deployState, setDeployState] = useState("idle"); // idle | syncing | building | deploying | deployed | error
+  const [deployInfo, setDeployInfo] = useState(null);
+  const [buildLogs, setBuildLogs] = useState("");
+  const [showBuildLogs, setShowBuildLogs] = useState(false);
 
   const dirtyRef = useRef(false);
   const itemsRef = useRef(items);
@@ -142,6 +146,50 @@ function WorkspaceLayout() {
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [persistNow]);
+
+  const handleDeploy = useCallback(async (podType = "frontend") => {
+    try {
+      // 1. Save current files
+      setDeployState("syncing");
+      await persistNow();
+      await syncWorkspace();
+
+      // 2. Build
+      setDeployState("building");
+      setBuildLogs("");
+      setShowBuildLogs(true);
+      await triggerBuild(podType);
+
+      // Stream build logs via WebSocket
+      const token = getToken();
+      const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+      const logsWs = new WebSocket(
+        `${protocol}//${window.location.host}/api/deploy/ws/build-logs?token=${encodeURIComponent(token)}&pod_type=${encodeURIComponent(podType)}`
+      );
+
+      await new Promise((resolve, reject) => {
+        logsWs.onmessage = (e) => setBuildLogs((prev) => prev + e.data);
+        logsWs.onclose = () => resolve();
+        logsWs.onerror = () => reject(new Error("Build log stream failed"));
+      });
+
+      // Check final status
+      const buildResult = await getBuildStatus(podType);
+      if (buildResult.status === "failed") {
+        setDeployState("error");
+        return;
+      }
+
+      // 3. Deploy
+      setDeployState("deploying");
+      const result = await runDeploy(podType);
+      setDeployInfo(result);
+      setDeployState("deployed");
+    } catch (err) {
+      console.error("Deploy failed:", err);
+      setDeployState("error");
+    }
   }, [persistNow]);
 
   const handleCreateFile = (parentId = null) => {
@@ -431,6 +479,23 @@ const handleImportItemsIntoFolder = async (folderId, dataTransfer) => {
             <line x1="21" y1="12" x2="9" y2="12" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
           </svg>
         </button>
+        <button
+          type="button"
+          className="workspace-theme-option workspace-deploy-btn"
+          onClick={() => handleDeploy("frontend")}
+          disabled={deployState === "building" || deployState === "deploying" || deployState === "syncing"}
+          aria-label="Deploy"
+          title={deployState === "idle" ? "Deploy workspace" : `Deploy: ${deployState}`}
+          style={{
+            background: deployState === "deployed" ? "rgba(34, 197, 94, 0.2)" : deployState === "error" ? "rgba(239, 68, 68, 0.2)" : undefined,
+          }}
+        >
+          <svg viewBox="0 0 24 24" aria-hidden="true" className="workspace-theme-icon">
+            <path d="M12 2L2 7l10 5 10-5-10-5z" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round"/>
+            <path d="M2 17l10 5 10-5" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+            <path d="M2 12l10 5 10-5" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+        </button>
       </div>
 
       <Sidebar
@@ -461,6 +526,21 @@ const handleImportItemsIntoFolder = async (folderId, dataTransfer) => {
         activeFile={activeFile?.type === "file" ? activeFile : null}
         updateActiveFile={handleUpdateActiveFile}
       />
+
+      {showBuildLogs && (
+        <div className="build-logs-overlay">
+          <div className="build-logs-header">
+            <span>Build Logs — {deployState}</span>
+            {deployInfo?.url && (
+              <a href={deployInfo.url} target="_blank" rel="noreferrer" style={{ color: "#38bdf8", marginLeft: 12, fontSize: 13 }}>
+                Open {deployInfo.url}
+              </a>
+            )}
+            <button onClick={() => setShowBuildLogs(false)} className="build-logs-close">✕</button>
+          </div>
+          <pre className="build-logs-content">{buildLogs || "Waiting for logs…"}</pre>
+        </div>
+      )}
     </div>
   );
 }

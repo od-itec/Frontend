@@ -107,3 +107,86 @@ export async function deleteFileApi(fileId) {
   });
   if (!res.ok && res.status !== 204) throw new Error("Failed to delete file");
 }
+
+// --- Workspace API ---
+
+export async function startWorkspace() {
+  const res = await fetch(`${API_BASE}/workspace/start`, {
+    method: "POST",
+    headers: authHeaders(),
+  });
+  if (!res.ok) throw new Error("Failed to start workspace");
+  return res.json();
+}
+
+export async function stopWorkspace() {
+  const res = await fetch(`${API_BASE}/workspace/stop`, {
+    method: "POST",
+    headers: authHeaders(),
+  });
+  if (!res.ok) throw new Error("Failed to stop workspace");
+  return res.json();
+}
+
+export async function getWorkspaceStatus() {
+  const res = await fetch(`${API_BASE}/workspace/status`, {
+    headers: authHeaders(),
+  });
+  if (!res.ok) throw new Error("Failed to get workspace status");
+  return res.json();
+}
+
+export async function syncWorkspace() {
+  const res = await fetch(`${API_BASE}/workspace/sync`, {
+    method: "POST",
+    headers: authHeaders(),
+  });
+  if (!res.ok) throw new Error("Failed to sync workspace");
+  return res.json();
+}
+
+// --- Deploy API ---
+
+export async function triggerBuild(podType = "frontend") {
+  const res = await fetch(`${API_BASE}/deploy/build`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...authHeaders() },
+    body: JSON.stringify({ pod_type: podType }),
+  });
+  if (!res.ok) throw new Error("Failed to trigger build");
+  return res.json();
+}
+
+export async function getBuildStatus(podType = "frontend") {
+  const res = await fetch(`${API_BASE}/deploy/build/status?pod_type=${podType}`, {
+    headers: authHeaders(),
+  });
+  if (!res.ok) throw new Error("Failed to get build status");
+  return res.json();
+}
+
+export async function getBuildLogs(podType = "frontend") {
+  const res = await fetch(`${API_BASE}/deploy/build/logs?pod_type=${podType}`, {
+    headers: authHeaders(),
+  });
+  if (!res.ok) throw new Error("Failed to get build logs");
+  return res.json();
+}
+
+export async function runDeploy(podType = "frontend") {
+  const res = await fetch(`${API_BASE}/deploy/run`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...authHeaders() },
+    body: JSON.stringify({ pod_type: podType }),
+  });
+  if (!res.ok) throw new Error("Failed to deploy");
+  return res.json();
+}
+
+export async function getDeployStatus(podType = "frontend") {
+  const res = await fetch(`${API_BASE}/deploy/status?pod_type=${podType}`, {
+    headers: authHeaders(),
+  });
+  if (!res.ok) throw new Error("Failed to get deploy status");
+  return res.json();
+}
