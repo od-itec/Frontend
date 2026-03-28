@@ -109,7 +109,7 @@ function DeployPanel({ theme = "graphite" }) {
       const proto = window.location.protocol === "https:" ? "wss:" : "ws:";
       const host = window.location.host;
       const url =
-        `${proto}//${host}/api/deploy/ws/deploy/build` +
+        `${proto}//${host}/api/deploy/ws/build` +
         `?token=${encodeURIComponent(token)}` +
         `&project_path=${encodeURIComponent(project.path)}` +
         `&image_name=${encodeURIComponent(imageName)}`;
