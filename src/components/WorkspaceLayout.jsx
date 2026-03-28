@@ -1,4 +1,7 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { logout, loadFiles, saveTree } from "../api";
+import { flattenTree, buildTree } from "../fileTreeUtils";
 import Sidebar from "./Sidebar";
 import Editor from "./Editor";
 import "./WorkspaceLayout.css";
@@ -37,6 +40,7 @@ function MoonIcon() {
 }
 
 function WorkspaceLayout() {
+  const navigate = useNavigate();
   const [theme, setTheme] = useState(() => {
     if (typeof window === "undefined") return "sky";
     return localStorage.getItem(THEME_STORAGE_KEY) || "sky";
@@ -45,14 +49,100 @@ function WorkspaceLayout() {
   const [activeFileId, setActiveFileId] = useState(null);
   const [draftItemId, setDraftItemId] = useState(null);
   const [renamingItemId, setRenamingItemId] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [saveStatus, setSaveStatus] = useState("saved"); // "saved" | "saving" | "dirty"
+
+  const dirtyRef = useRef(false);
+  const itemsRef = useRef(items);
+  const initialLoadDone = useRef(false);
 
   const activeFile = useMemo(() => {
     return findItemById(items, activeFileId);
   }, [items, activeFileId]);
 
+  // Keep itemsRef in sync
+  useEffect(() => {
+    itemsRef.current = items;
+  }, [items]);
+
   useEffect(() => {
     localStorage.setItem(THEME_STORAGE_KEY, theme);
   }, [theme]);
+
+  // Load files on mount
+  useEffect(() => {
+    loadFiles()
+      .then((flat) => {
+        const tree = buildTree(flat);
+        setItems(tree);
+        initialLoadDone.current = true;
+      })
+      .catch((err) => {
+        console.error("Failed to load files:", err);
+        initialLoadDone.current = true;
+      })
+      .finally(() => setLoading(false));
+  }, []);
+
+  // Mark dirty when items change (skip initial load)
+  useEffect(() => {
+    if (!initialLoadDone.current) return;
+    dirtyRef.current = true;
+    setSaveStatus("dirty");
+  }, [items]);
+
+  // Persist helper
+  const persistNow = useCallback(async () => {
+    if (!dirtyRef.current) return;
+    dirtyRef.current = false;
+    setSaveStatus("saving");
+    try {
+      await saveTree(flattenTree(itemsRef.current));
+      setSaveStatus("saved");
+    } catch (err) {
+      console.error("Auto-save failed:", err);
+      dirtyRef.current = true;
+      setSaveStatus("dirty");
+    }
+  }, []);
+
+  // Auto-save with 2s debounce
+  useEffect(() => {
+    const timer = setInterval(() => {
+      if (dirtyRef.current) persistNow();
+    }, 2000);
+    return () => clearInterval(timer);
+  }, [persistNow]);
+
+  // Flush on page unload
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      if (dirtyRef.current) {
+        const flat = flattenTree(itemsRef.current);
+        const token = localStorage.getItem("access_token");
+        // Use synchronous XHR as last resort — sendBeacon can't set auth headers
+        const xhr = new XMLHttpRequest();
+        xhr.open("PUT", "/api/files", false); // synchronous
+        xhr.setRequestHeader("Content-Type", "application/json");
+        xhr.setRequestHeader("Authorization", `Bearer ${token}`);
+        xhr.send(JSON.stringify({ items: flat }));
+      }
+    };
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, []);
+
+  // Ctrl+S / Cmd+S manual save
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === "s") {
+        e.preventDefault();
+        persistNow();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [persistNow]);
 
   const handleCreateFile = (parentId = null) => {
     const newFile = {
@@ -296,9 +386,20 @@ const handleImportItemsIntoFolder = async (folderId, dataTransfer) => {
   });
 };
 
+  if (loading) {
+    return (
+      <div className={`workspace-shell theme-${theme}`} style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <p style={{ color: "var(--text-primary, #888)", fontSize: 16 }}>Loading workspace…</p>
+      </div>
+    );
+  }
+
   return (
     <div className={`workspace-shell theme-${theme}`}>
       <div className="workspace-theme-toggle" role="group" aria-label="Theme switcher">
+        <span className="workspace-save-indicator" title={saveStatus === "saving" ? "Saving…" : saveStatus === "dirty" ? "Unsaved changes" : "All changes saved"}>
+          {saveStatus === "saving" ? "Saving…" : saveStatus === "dirty" ? "●" : "✓"}
+        </span>
         <button
           type="button"
           className={`workspace-theme-option ${theme === "sky" ? "is-active" : ""}`}
@@ -316,6 +417,19 @@ const handleImportItemsIntoFolder = async (folderId, dataTransfer) => {
           aria-pressed={theme === "graphite"}
         >
           <MoonIcon />
+        </button>
+        <button
+          type="button"
+          className="workspace-theme-option workspace-logout-btn"
+          onClick={() => { logout(); navigate("/login"); }}
+          aria-label="Log out"
+          title="Log out"
+        >
+          <svg viewBox="0 0 24 24" aria-hidden="true" className="workspace-theme-icon">
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+            <polyline points="16 17 21 12 16 7" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+            <line x1="21" y1="12" x2="9" y2="12" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
         </button>
       </div>
 

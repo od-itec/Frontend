@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { login, register } from "../api";
 import mascotIcon from "../assets/testimoniale-icon.svg";
 import "./LoginPage.css";
 
@@ -107,7 +108,11 @@ export default function Login() {
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [username, setUsername] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [isRegister, setIsRegister] = useState(false);
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
   const [theme, setTheme] = useState(() => {
     if (typeof window === "undefined") return "sky";
     return localStorage.getItem(THEME_STORAGE_KEY) || "sky";
@@ -117,11 +122,21 @@ export default function Login() {
     localStorage.setItem(THEME_STORAGE_KEY, theme);
   }, [theme]);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log("Email:", email);
-    console.log("Password:", password);
-    navigate("/workspace");
+    setError("");
+    setLoading(true);
+    try {
+      if (isRegister) {
+        await register(email, password, username);
+      }
+      await login(email, password);
+      navigate("/workspace");
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -156,10 +171,27 @@ export default function Login() {
           />
         </div>
 
-        <h2 className="login-title">Welcome Back</h2>
-        <p className="login-subtitle">Log in to your account</p>
+        <h2 className="login-title">{isRegister ? "Create Account" : "Welcome Back"}</h2>
+        <p className="login-subtitle">{isRegister ? "Sign up for a new account" : "Log in to your account"}</p>
+
+        {error && <p className="login-error">{error}</p>}
 
         <form onSubmit={handleSubmit} className="login-form">
+          {isRegister && (
+            <div className="input-group">
+              <label>Username</label>
+              <input
+                type="text"
+                placeholder="Choose a username"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                required
+                minLength={3}
+                maxLength={50}
+              />
+            </div>
+          )}
+
           <div className="input-group">
             <label>Email</label>
             <input
@@ -193,13 +225,19 @@ export default function Login() {
             </div>
           </div>
 
-          <button type="submit" className="login-btn">
-            Login
+          <button type="submit" className="login-btn" disabled={loading}>
+            {loading ? "Please wait…" : isRegister ? "Register" : "Login"}
           </button>
         </form>
 
         <p className="login-footer">
-          Don't have an account? <span>Register</span>
+          {isRegister ? "Already have an account? " : "Don't have an account? "}
+          <span
+            onClick={() => { setIsRegister(!isRegister); setError(""); }}
+            style={{ cursor: "pointer" }}
+          >
+            {isRegister ? "Login" : "Register"}
+          </span>
         </p>
       </div>
     </div>

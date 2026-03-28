@@ -347,6 +347,13 @@
   color: var(--login-footer-color);
 }
 
+.login-error {
+  color: #ef4444;
+  font-size: 13px;
+  margin-bottom: 8px;
+  text-align: center;
+}
+
 .login-footer span {
   color: var(--login-link-color);
   font-weight: 600;
