@@ -1,17 +1,14 @@
-FROM node:alpine3.22 AS base
-WORKDIR /runtime
+FROM node:22-alpine as builder
 
-FROM base AS deps
-RUN --mount=source=/package.json,target=/runtime/package.json,rw             \
-    --mount=source=/package-lock.json,target=/runtime/package-lock.json,rw   \
-    --mount=type=cache,sharing=private,target=/root/.npm                     \
-    --mount=type=cache,sharing=private,target=/root/.cache                   \
-    npm install
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci
 
-FROM deps AS runtime
-COPY --link . .
-# TODO: why are these needed ...
-RUN chown -R node:node /runtime
-USER node
-EXPOSE 5173
-ENTRYPOINT [ "npm", "run", "dev" ]
+COPY . .
+# N WORD...
+RUN npm run build
+
+FROM nginx:alpine
+COPY --from=builder /app/dist /usr/share/nginx/html
+EXPOSE 80
+CMD ["nginx", "-g", "daemon off;"]
