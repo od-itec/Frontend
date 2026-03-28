@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import Sidebar from "./Sidebar";
-import Editor from "./EditorWithTerminal";
+import Editor from "./Editor";
 import "./WorkspaceLayout.css";
 import EditorWithTerminal from "./EditorWithTerminal";
 
@@ -213,6 +213,89 @@ function WorkspaceLayout() {
     );
   };
 
+  const handleOpenFiles = async () => {
+  const input = document.createElement("input");
+  input.type = "file";
+  input.multiple = true;
+
+  input.onchange = async (event) => {
+    const selectedFiles = Array.from(event.target.files || []);
+    const loadedItems = await filesToItems(selectedFiles);
+    setItems((prev) => [...prev, ...loadedItems]);
+  };
+
+  input.click();
+};
+
+const handleOpenFolder = async () => {
+  if ("showDirectoryPicker" in window) {
+    try {
+      const directoryHandle = await window.showDirectoryPicker();
+      const loadedItems = await directoryHandleToItems(directoryHandle);
+      setItems((prev) => [...prev, loadedItems]);
+    } catch (error) {
+      console.error("Open folder cancelled or failed:", error);
+    }
+    return;
+  }
+
+  const input = document.createElement("input");
+  input.type = "file";
+  input.multiple = true;
+  input.webkitdirectory = true;
+
+  input.onchange = async (event) => {
+    const selectedFiles = Array.from(event.target.files || []);
+    const loadedItems = await filesFromWebkitDirectory(selectedFiles);
+    setItems((prev) => [...prev, ...loadedItems]);
+  };
+
+  input.click();
+};
+
+const handleMoveItem = (draggedItemId, targetFolderId = null) => {
+  if (!draggedItemId) return;
+  if (draggedItemId === targetFolderId) return;
+
+  const draggedItem = findItemById(items, draggedItemId);
+  if (!draggedItem) return;
+
+  if (targetFolderId) {
+    const targetFolder = findItemById(items, targetFolderId);
+    if (!targetFolder || targetFolder.type !== "folder") return;
+
+    if (draggedItem.type === "folder" && subtreeContainsId(draggedItem, targetFolderId)) {
+      return;
+    }
+  }
+
+  const { nextItems, removedItem } = removeItemAndReturn(items, draggedItemId);
+  if (!removedItem) return;
+
+  const inserted = insertItem(nextItems, targetFolderId, removedItem);
+  setItems(inserted);
+};
+
+const handleImportItemsAtRoot = async (dataTransfer) => {
+  const importedItems = await extractItemsFromDataTransfer(dataTransfer);
+  if (importedItems.length > 0) {
+    setItems((prev) => [...prev, ...importedItems]);
+  }
+};
+
+const handleImportItemsIntoFolder = async (folderId, dataTransfer) => {
+  const importedItems = await extractItemsFromDataTransfer(dataTransfer);
+  if (importedItems.length === 0) return;
+
+  setItems((prev) => {
+    let next = prev;
+    for (const item of importedItems) {
+      next = insertItem(next, folderId, item);
+    }
+    return next;
+  });
+};
+
   return (
     <div className={`workspace-shell theme-${theme}`}>
       <div className="workspace-theme-toggle" role="group" aria-label="Theme switcher">
@@ -253,6 +336,11 @@ function WorkspaceLayout() {
         onRenameItemChange={handleRenameItemChange}
         onConfirmRenameItem={handleConfirmRenameItem}
         onCancelRenameItem={handleCancelRenameItem}
+        onMoveItem={handleMoveItem}
+        onImportItemsAtRoot={handleImportItemsAtRoot}
+        onImportItemsIntoFolder={handleImportItemsIntoFolder}
+        onOpenFiles={handleOpenFiles}
+        onOpenFolder={handleOpenFolder}
       />
 
       <EditorWithTerminal
@@ -370,6 +458,225 @@ function inferLanguageFromFileName(fileName) {
   }
 
   return "Plain Text";
+}
+
+function removeItemAndReturn(items, itemId) {
+  let removedItem = null;
+
+  const nextItems = items
+    .filter((item) => {
+      if (item.id === itemId) {
+        removedItem = item;
+        return false;
+      }
+      return true;
+    })
+    .map((item) => {
+      if (item.type === "folder") {
+        const result = removeItemAndReturn(item.children, itemId);
+
+        if (result.removedItem) {
+          removedItem = result.removedItem;
+        }
+
+        return {
+          ...item,
+          children: result.nextItems,
+        };
+      }
+
+      return item;
+    });
+
+  return { nextItems, removedItem };
+}
+
+async function directoryHandleToItems(directoryHandle) {
+  const folderItem = {
+    id: crypto.randomUUID(),
+    type: "folder",
+    name: directoryHandle.name,
+    isExpanded: true,
+    children: [],
+  };
+
+  for await (const entry of directoryHandle.values()) {
+    if (entry.kind === "file") {
+      const file = await entry.getFile();
+      const content = await file.text();
+
+      folderItem.children.push({
+        id: crypto.randomUUID(),
+        type: "file",
+        name: file.name,
+        content,
+        language: inferLanguageFromFileName(file.name),
+      });
+    }
+
+    if (entry.kind === "directory") {
+      const childFolder = await directoryHandleToItems(entry);
+      folderItem.children.push(childFolder);
+    }
+  }
+
+  return folderItem;
+}
+
+async function filesFromWebkitDirectory(fileList) {
+  const root = [];
+
+  for (const file of fileList) {
+    const parts = (file.webkitRelativePath || file.name).split("/");
+    const content = await file.text();
+
+    insertResolvedWebkitFile(root, parts, file.name, content);
+  }
+
+  return root;
+}
+
+function insertResolvedWebkitFile(target, parts, fileName, content) {
+  if (parts.length === 1) {
+    target.push({
+      id: crypto.randomUUID(),
+      type: "file",
+      name: fileName,
+      content,
+      language: inferLanguageFromFileName(fileName),
+    });
+    return;
+  }
+
+  const [folderName, ...rest] = parts;
+
+  let folder = target.find(
+    (item) => item.type === "folder" && item.name === folderName
+  );
+
+  if (!folder) {
+    folder = {
+      id: crypto.randomUUID(),
+      type: "folder",
+      name: folderName,
+      isExpanded: true,
+      children: [],
+    };
+    target.push(folder);
+  }
+
+  insertResolvedWebkitFile(folder.children, rest, fileName, content);
+}
+
+function loadFileContentLater(fileItem, file) {
+  file.text().then((content) => {
+    fileItem.content = content;
+  });
+}
+
+async function extractItemsFromDataTransfer(dataTransfer) {
+  const dtItems = Array.from(dataTransfer.items || []);
+  const hasInternalDrag = dataTransfer.getData("application/x-itec-item-id");
+
+  if (hasInternalDrag) {
+    return [];
+  }
+
+  const entryItems = [];
+
+  for (const item of dtItems) {
+    if (item.kind !== "file") continue;
+
+    const entry = item.webkitGetAsEntry?.();
+    if (entry) {
+      const built = await entryToItem(entry);
+      if (built) entryItems.push(built);
+    }
+  }
+
+  if (entryItems.length > 0) {
+    return entryItems;
+  }
+
+  const files = Array.from(dataTransfer.files || []);
+  return await filesToItems(files);
+}
+
+async function entryToItem(entry) {
+  if (!entry) return null;
+
+  if (entry.isFile) {
+    const file = await getFileFromEntry(entry);
+    const content = await file.text();
+
+    return {
+      id: crypto.randomUUID(),
+      type: "file",
+      name: file.name,
+      content,
+      language: inferLanguageFromFileName(file.name),
+    };
+  }
+
+  if (entry.isDirectory) {
+    const children = await readDirectoryEntries(entry);
+
+    return {
+      id: crypto.randomUUID(),
+      type: "folder",
+      name: entry.name,
+      isExpanded: true,
+      children,
+    };
+  }
+
+  return null;
+}
+
+function getFileFromEntry(fileEntry) {
+  return new Promise((resolve, reject) => {
+    fileEntry.file(resolve, reject);
+  });
+}
+
+async function readDirectoryEntries(directoryEntry) {
+  const reader = directoryEntry.createReader();
+  const allEntries = [];
+
+  while (true) {
+    const batch = await new Promise((resolve, reject) => {
+      reader.readEntries(resolve, reject);
+    });
+
+    if (!batch.length) break;
+    allEntries.push(...batch);
+  }
+
+  const children = [];
+  for (const entry of allEntries) {
+    const built = await entryToItem(entry);
+    if (built) children.push(built);
+  }
+
+  return children;
+}
+
+async function filesToItems(fileList) {
+  const items = [];
+
+  for (const file of fileList) {
+    const content = await file.text();
+
+    items.push({
+      id: crypto.randomUUID(),
+      type: "file",
+      name: file.name,
+      content,
+      language: inferLanguageFromFileName(file.name),
+    });
+  }
+
+  return items;
 }
 
 export default WorkspaceLayout;

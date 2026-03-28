@@ -115,8 +115,8 @@
 
 .workspace-theme-toggle {
   position: absolute;
-  right: 18px;
-  bottom: 18px;
+  right: 5px;
+  top: 50px;
   z-index: 6;
   display: inline-flex;
   align-items: center;
@@ -810,4 +810,10 @@
 
 .terminal-input::placeholder {
   color: var(--ws-terminal-muted);
+}
+
+.explorer-dropzone {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
 }

@@ -16,7 +16,28 @@ function Sidebar({
   onRenameItemChange,
   onConfirmRenameItem,
   onCancelRenameItem,
+  onMoveItem,
+  onImportItemsAtRoot,
+  onImportItemsIntoFolder,
+  onOpenFiles,
+  onOpenFolder,
 }) {
+  const handleRootDragOver = (e) => {
+    e.preventDefault();
+  };
+
+  const handleRootDrop = async (e) => {
+    e.preventDefault();
+
+    const draggedItemId = e.dataTransfer.getData("application/x-itec-item-id");
+    if (draggedItemId) {
+      onMoveItem(draggedItemId, null);
+      return;
+    }
+
+    await onImportItemsAtRoot(e.dataTransfer);
+  };
+
   return (
     <aside className="sidebar">
       <div className="sidebar-header-row">
@@ -41,38 +62,64 @@ function Sidebar({
         >
           🗀
         </button>
+
+        <button
+          className="icon-button"
+          onClick={onOpenFiles}
+          title="Open Files"
+          aria-label="Open files"
+        >
+          ⤴
+        </button>
+
+        <button
+          className="icon-button"
+          onClick={onOpenFolder}
+          title="Open Folder"
+          aria-label="Open folder"
+        >
+          ⛁
+        </button>
       </div>
 
-      {items.length === 0 ? (
-        <div className="empty-explorer">
-          <p>No files or folders yet.</p>
-          <span>Create a file or folder to populate the workspace.</span>
-        </div>
-      ) : (
-        <div className="file-list">
-          {items.map((item) => (
-            <TreeItem
-              key={item.id}
-              item={item}
-              level={0}
-              activeFileId={activeFileId}
-              renamingItemId={renamingItemId}
-              onCreateFile={onCreateFile}
-              onCreateFolder={onCreateFolder}
-              onDeleteItem={onDeleteItem}
-              onSelectFile={onSelectFile}
-              onToggleFolder={onToggleFolder}
-              onRenameDraftItem={onRenameDraftItem}
-              onConfirmDraftItem={onConfirmDraftItem}
-              onCancelDraftItem={onCancelDraftItem}
-              onStartRenamingItem={onStartRenamingItem}
-              onRenameItemChange={onRenameItemChange}
-              onConfirmRenameItem={onConfirmRenameItem}
-              onCancelRenameItem={onCancelRenameItem}
-            />
-          ))}
-        </div>
-      )}
+      <div
+        className="explorer-dropzone"
+        onDragOver={handleRootDragOver}
+        onDrop={handleRootDrop}
+      >
+        {items.length === 0 ? (
+          <div className="empty-explorer">
+            <p>No files or folders yet.</p>
+            <span>Create a file or folder to populate the workspace.</span>
+          </div>
+        ) : (
+          <div className="file-list">
+            {items.map((item) => (
+              <TreeItem
+                key={item.id}
+                item={item}
+                level={0}
+                activeFileId={activeFileId}
+                renamingItemId={renamingItemId}
+                onCreateFile={onCreateFile}
+                onCreateFolder={onCreateFolder}
+                onDeleteItem={onDeleteItem}
+                onSelectFile={onSelectFile}
+                onToggleFolder={onToggleFolder}
+                onRenameDraftItem={onRenameDraftItem}
+                onConfirmDraftItem={onConfirmDraftItem}
+                onCancelDraftItem={onCancelDraftItem}
+                onStartRenamingItem={onStartRenamingItem}
+                onRenameItemChange={onRenameItemChange}
+                onConfirmRenameItem={onConfirmRenameItem}
+                onCancelRenameItem={onCancelRenameItem}
+                onMoveItem={onMoveItem}
+                onImportItemsIntoFolder={onImportItemsIntoFolder}
+              />
+            ))}
+          </div>
+        )}
+      </div>
     </aside>
   );
 }
@@ -95,7 +142,33 @@ function TreeItem(props) {
     onRenameItemChange,
     onConfirmRenameItem,
     onCancelRenameItem,
+    onMoveItem,
+    onImportItemsIntoFolder,
   } = props;
+
+  const handleDragStart = (e) => {
+    e.stopPropagation();
+    e.dataTransfer.setData("application/x-itec-item-id", item.id);
+    e.dataTransfer.effectAllowed = "move";
+  };
+
+  const handleFolderDragOver = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+  };
+
+  const handleFolderDrop = async (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    const draggedItemId = e.dataTransfer.getData("application/x-itec-item-id");
+    if (draggedItemId) {
+      onMoveItem(draggedItemId, item.id);
+      return;
+    }
+
+    await onImportItemsIntoFolder(item.id, e.dataTransfer);
+  };
 
   if (item.isDraft) {
     return (
@@ -127,6 +200,10 @@ function TreeItem(props) {
         <div
           className="tree-item folder-item"
           style={{ paddingLeft: `${16 + level * 16}px` }}
+          draggable
+          onDragStart={handleDragStart}
+          onDragOver={handleFolderDragOver}
+          onDrop={handleFolderDrop}
         >
           <button
             className="folder-main"
@@ -180,6 +257,8 @@ function TreeItem(props) {
     <div
       className={`file-row ${item.id === activeFileId ? "active" : ""}`}
       style={{ paddingLeft: `${16 + level * 16}px` }}
+      draggable
+      onDragStart={handleDragStart}
     >
       <button
         className={`file-item ${item.id === activeFileId ? "active" : ""}`}
