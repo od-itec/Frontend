@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import Sidebar from "./Sidebar";
-import Editor from "./Editor";
+import Editor from "./EditorWithTerminal";
 import "./WorkspaceLayout.css";
+import EditorWithTerminal from "./EditorWithTerminal";
 
 const THEME_STORAGE_KEY = "itec-theme";
 
@@ -254,7 +255,7 @@ function WorkspaceLayout() {
         onCancelRenameItem={handleCancelRenameItem}
       />
 
-      <Editor
+      <EditorWithTerminal
         activeFile={activeFile?.type === "file" ? activeFile : null}
         updateActiveFile={handleUpdateActiveFile}
       />
