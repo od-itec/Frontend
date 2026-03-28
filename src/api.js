@@ -107,3 +107,78 @@ export async function deleteFileApi(fileId) {
   });
   if (!res.ok && res.status !== 204) throw new Error("Failed to delete file");
 }
+
+// --- Workspace API ---
+
+export async function syncWorkspace() {
+  const res = await fetch(`${API_BASE}/workspace/sync`, {
+    method: "POST",
+    headers: authHeaders(),
+  });
+  if (!res.ok) throw new Error("Failed to sync workspace");
+  return res.json();
+}
+
+export async function detectProjects() {
+  const res = await fetch(`${API_BASE}/workspace/detect-projects`, {
+    headers: authHeaders(),
+  });
+  if (!res.ok) throw new Error("Failed to detect projects");
+  return res.json();
+}
+
+// --- Deploy API ---
+
+export async function buildProject(projectPath, imageName) {
+  const res = await fetch(`${API_BASE}/deploy/build`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...authHeaders() },
+    body: JSON.stringify({ project_path: projectPath, image_name: imageName }),
+  });
+  if (!res.ok) throw new Error("Failed to start build");
+  return res.json();
+}
+
+export async function runContainer(imageName, containerName, port = 8080, env = {}) {
+  const res = await fetch(`${API_BASE}/deploy/run`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...authHeaders() },
+    body: JSON.stringify({
+      image_name: imageName,
+      container_name: containerName,
+      port,
+      env,
+    }),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || "Failed to run container");
+  }
+  return res.json();
+}
+
+export async function stopContainer(containerName) {
+  const res = await fetch(`${API_BASE}/deploy/stop`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...authHeaders() },
+    body: JSON.stringify({ container_name: containerName }),
+  });
+  if (!res.ok) throw new Error("Failed to stop container");
+  return res.json();
+}
+
+export async function getDeployStatus() {
+  const res = await fetch(`${API_BASE}/deploy/status`, {
+    headers: authHeaders(),
+  });
+  if (!res.ok) throw new Error("Failed to get deploy status");
+  return res.json();
+}
+
+export async function getContainerLogs(containerName, tail = 200) {
+  const res = await fetch(`${API_BASE}/deploy/logs/${containerName}?tail=${tail}`, {
+    headers: authHeaders(),
+  });
+  if (!res.ok) throw new Error("Failed to get logs");
+  return res.json();
+}
