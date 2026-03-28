@@ -333,7 +333,13 @@
   background: var(--ws-editor-bg);
 }
 
-.line-numbers {
+.monaco-host {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+}
+
+.editor-area > .line-numbers {
   width: 56px;
   padding: 16px 8px 16px 0;
   background: var(--ws-editor-bg);
@@ -346,7 +352,7 @@
   border-right: 1px solid var(--ws-panel-border);
 }
 
-.line-number {
+.editor-area > .line-numbers .line-number {
   height: 22.4px;
 }
 
@@ -391,6 +397,50 @@
   background: var(--ws-status-bg);
   color: var(--ws-status-text);
   font-size: 12px;
+}
+
+.tab-suggestions-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 34px;
+  padding: 6px 12px;
+  border-top: 1px solid var(--ws-panel-border);
+  background: var(--ws-tab-bg);
+  color: var(--ws-soft-text);
+  font-size: 12px;
+}
+
+.tab-suggestions-title {
+  flex-shrink: 0;
+  color: var(--ws-shell-text);
+  font-weight: 600;
+}
+
+.tab-suggestions-list {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  overflow-x: auto;
+  white-space: nowrap;
+  min-width: 0;
+}
+
+.tab-suggestion-chip {
+  padding: 2px 8px;
+  border: 1px solid var(--ws-panel-border);
+  border-radius: 999px;
+  background: var(--ws-editor-bg);
+  color: var(--ws-soft-text);
+}
+
+.tab-suggestion-chip.is-exact {
+  border-color: var(--ws-accent);
+  color: var(--ws-shell-text);
+}
+
+.tab-suggestions-empty {
+  color: var(--ws-muted-text);
 }
 
 .file-item.draft {
@@ -476,7 +526,7 @@
   background: var(--ws-editor-bg);
 }
 
-.line-numbers {
+.editor-area > .line-numbers {
   width: 56px;
   padding: 16px 8px 16px 0;
   overflow: hidden;
@@ -490,7 +540,7 @@
   border-right: 1px solid var(--ws-panel-border);
 }
 
-.line-number {
+.editor-area > .line-numbers .line-number {
   height: 22.4px;
 }
 
@@ -553,6 +603,60 @@
 .code-editor-overlay:disabled {
   opacity: 0.7;
   cursor: default;
+}
+
+.autocomplete-popup {
+  position: absolute;
+  z-index: 20;
+  min-width: 280px;
+  max-width: 520px;
+  max-height: 220px;
+  overflow-y: auto;
+  border: 1px solid var(--ws-panel-border);
+  border-radius: 8px;
+  background: var(--ws-tab-active-bg);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.28);
+}
+
+.autocomplete-item {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 10px;
+  border: none;
+  border-bottom: 1px solid var(--ws-panel-border);
+  background: transparent;
+  color: var(--ws-soft-text);
+  text-align: left;
+  cursor: pointer;
+}
+
+.autocomplete-item:last-child {
+  border-bottom: none;
+}
+
+.autocomplete-item:hover,
+.autocomplete-item.active {
+  background: var(--ws-active-bg);
+  color: var(--ws-shell-text);
+}
+
+.autocomplete-trigger {
+  min-width: 54px;
+  color: var(--ws-accent);
+  font-family: Consolas, "Courier New", monospace;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.autocomplete-preview {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: Consolas, "Courier New", monospace;
+  font-size: 12px;
 }
 
 .tree-item {
