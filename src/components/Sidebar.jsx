@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 function Sidebar({
   currentUser,
@@ -23,6 +23,48 @@ function Sidebar({
   onOpenFiles,
   onOpenFolder,
 }) {
+  const [inviteEmail, setInviteEmail] = useState("");
+  const [inviteRole, setInviteRole] = useState("editor");
+  const [inviteMessage, setInviteMessage] = useState("");
+  const [isInviteOpen, setIsInviteOpen] = useState(false);
+
+  const inviteLink = useMemo(() => {
+    if (typeof window === "undefined") return "";
+
+    const tokenSeed = currentUser?.id || currentUser?.email || "guest";
+    const encodedSeed = encodeURIComponent(String(tokenSeed));
+    return `${window.location.origin}/workspace?invite=${encodedSeed}&role=${inviteRole}`;
+  }, [currentUser?.id, currentUser?.email, inviteRole]);
+
+  const handleCopyInviteLink = async () => {
+    if (!inviteLink) return;
+
+    try {
+      await navigator.clipboard.writeText(inviteLink);
+      setInviteMessage("Invite link copied.");
+    } catch {
+      setInviteMessage("Copy failed. Please copy manually.");
+    }
+  };
+
+  const handleGenerateInvite = async () => {
+    if (!inviteEmail.trim()) {
+      setInviteMessage("Enter an email first.");
+      return;
+    }
+
+    await handleCopyInviteLink();
+  };
+
+  const openInviteWindow = () => {
+    setInviteMessage("");
+    setIsInviteOpen(true);
+  };
+
+  const closeInviteWindow = () => {
+    setIsInviteOpen(false);
+  };
+
   const handleRootDragOver = (e) => {
     e.preventDefault();
   };
@@ -136,6 +178,78 @@ function Sidebar({
             </div>
           </div>
         </div>
+
+        <button
+          type="button"
+          className="sidebar-open-invite"
+          onClick={openInviteWindow}
+        >
+          Invite collaborator
+        </button>
+
+        {isInviteOpen ? (
+          <div className="sidebar-invite-overlay" onClick={closeInviteWindow}>
+            <div
+              className="sidebar-invite-box"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="sidebar-invite-top">
+                <div className="sidebar-invite-title">Collaborate</div>
+                <button
+                  type="button"
+                  className="sidebar-invite-close"
+                  onClick={closeInviteWindow}
+                  aria-label="Close invite window"
+                >
+                  ×
+                </button>
+              </div>
+              <input
+                type="email"
+                className="sidebar-invite-input"
+                placeholder="teammate@email.com"
+                value={inviteEmail}
+                onChange={(e) => setInviteEmail(e.target.value)}
+              />
+              <div className="sidebar-invite-row">
+                <select
+                  className="sidebar-invite-select"
+                  value={inviteRole}
+                  onChange={(e) => setInviteRole(e.target.value)}
+                >
+                  <option value="viewer">Viewer</option>
+                  <option value="editor">Editor</option>
+                </select>
+                <button
+                  type="button"
+                  className="sidebar-invite-button"
+                  onClick={handleGenerateInvite}
+                >
+                  Invite
+                </button>
+              </div>
+              <div className="sidebar-invite-link-row">
+                <input
+                  type="text"
+                  className="sidebar-invite-link"
+                  value={inviteLink}
+                  readOnly
+                />
+                <button
+                  type="button"
+                  className="sidebar-invite-copy"
+                  onClick={handleCopyInviteLink}
+                  title="Copy invite link"
+                  aria-label="Copy invite link"
+                >
+                  Copy
+                </button>
+              </div>
+              <div className="sidebar-invite-note">UI demo only. Backend invite flow not wired yet.</div>
+              {inviteMessage ? <div className="sidebar-invite-message">{inviteMessage}</div> : null}
+            </div>
+          </div>
+        ) : null}
       </div>
     </aside>
   );
