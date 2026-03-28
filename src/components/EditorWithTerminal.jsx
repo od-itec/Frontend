@@ -6,7 +6,7 @@ function EditorWithTerminal({ activeFile, updateActiveFile }) {
   const [isTerminalOpen, setIsTerminalOpen] = useState(true);
 
   return (
-    <div className="editor-stack">
+    <div className={`editor-stack ${isTerminalOpen ? "terminal-open" : "terminal-closed"}`}>
       <div className="editor-main">
         <Editor activeFile={activeFile} updateActiveFile={updateActiveFile} />
       </div>
