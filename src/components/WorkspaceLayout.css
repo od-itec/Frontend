@@ -26,6 +26,21 @@
   --ws-toggle-active-text: #eff6ff;
   --ws-toggle-shadow: rgba(56, 189, 248, 0.12);
 
+  --ws-file-row-hover: #2a2d2e;
+  --ws-file-row-active: #37373d;
+  --ws-delete-hover-bg: #5a1d1d;
+  --ws-delete-hover-text: #ffffff;
+
+  --ws-bottom-panel-bg: #181818;
+  --ws-bottom-panel-border: #2a2a2a;
+  --ws-terminal-bg: #1e1e1e;
+  --ws-terminal-text: #d4d4d4;
+  --ws-terminal-muted: #6f6f6f;
+  --ws-terminal-prompt: #4fc1ff;
+  --ws-terminal-tab-text: #cfcfcf;
+  --ws-terminal-tab-active-bg: #1e1e1e;
+  --ws-terminal-tab-active-text: #ffffff;
+
   position: fixed;
   inset: 0;
   display: flex;
@@ -61,10 +76,41 @@
   --ws-toggle-active-bg: #ffffff;
   --ws-toggle-active-text: #0f172a;
   --ws-toggle-shadow: rgba(15, 23, 42, 0.08);
+
+  --ws-file-row-hover: #e8f1ff;
+  --ws-file-row-active: #dbeafe;
+  --ws-delete-hover-bg: #fee2e2;
+  --ws-delete-hover-text: #991b1b;
+
+  --ws-bottom-panel-bg: #f8fbff;
+  --ws-bottom-panel-border: #dbeafe;
+  --ws-terminal-bg: #ffffff;
+  --ws-terminal-text: #0f172a;
+  --ws-terminal-muted: #94a3b8;
+  --ws-terminal-prompt: #2563eb;
+  --ws-terminal-tab-text: #64748b;
+  --ws-terminal-tab-active-bg: #ffffff;
+  --ws-terminal-tab-active-text: #0f172a;
+
+  --ws-status-bg: #dbeafe;
+  --ws-status-text: #1e3a8a;
 }
 
 .workspace-shell.theme-graphite {
   --ws-shell-bg: #0f172a;
+
+  --ws-bottom-panel-bg: #181818;
+  --ws-bottom-panel-border: #2a2a2a;
+  --ws-terminal-bg: #1e1e1e;
+  --ws-terminal-text: #d4d4d4;
+  --ws-terminal-muted: #6f6f6f;
+  --ws-terminal-prompt: #4fc1ff;
+  --ws-terminal-tab-text: #cfcfcf;
+  --ws-terminal-tab-active-bg: #1e1e1e;
+  --ws-terminal-tab-active-text: #ffffff;
+
+  --ws-status-bg: #172554;
+  --ws-status-text: #dbeafe;
 }
 
 .workspace-theme-toggle {
@@ -607,11 +653,11 @@
 }
 
 .file-row:hover {
-  background: #2a2d2e;
+  background: var(--ws-file-row-hover);
 }
 
 .file-row.active {
-  background: #37373d;
+  background: var(--ws-file-row-active);
 }
 
 .file-row .file-item {
@@ -624,7 +670,7 @@
   padding: 0;
   border: none;
   background: transparent;
-  color: #d4d4d4;
+  color: var(--ws-shell-text);
   font-size: 13px;
   text-align: left;
   cursor: pointer;
@@ -640,10 +686,128 @@
 }
 
 .delete-action {
-  color: #d4d4d4;
+  color: var(--ws-shell-text);
 }
 
 .delete-action:hover {
-  background: #5a1d1d;
-  color: #ffffff;
+  background: var(--ws-delete-hover-bg);
+  color: var(--ws-delete-hover-text);
+}
+
+.editor-stack {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--ws-editor-bg);
+}
+
+.editor-main {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+}
+
+.bottom-panel {
+  border-top: 1px solid var(--ws-bottom-panel-border);
+  background: var(--ws-bottom-panel-bg);
+}
+
+.bottom-panel.closed {
+  height: 34px;
+}
+
+.bottom-panel.open {
+  height: 220px;
+  display: flex;
+  flex-direction: column;
+}
+
+.bottom-panel-tabs {
+  height: 34px;
+  display: flex;
+  align-items: center;
+  background: var(--ws-bottom-panel-bg);
+  border-bottom: 1px solid var(--ws-bottom-panel-border);
+}
+
+.bottom-panel-tab {
+  height: 100%;
+  min-width: 44px;
+  padding: 0 12px;
+  border: none;
+  border-right: 1px solid var(--ws-bottom-panel-border);
+  background: transparent;
+  color: var(--ws-terminal-tab-text);
+  font-size: 12px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.bottom-panel-tab.active {
+  background: var(--ws-terminal-tab-active-bg);
+  color: var(--ws-terminal-tab-active-text);
+}
+
+.terminal-tab-icon {
+  font-family: Consolas, "Courier New", monospace;
+  font-size: 13px;
+  line-height: 1;
+}
+
+.terminal-panel {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--ws-bottom-panel-bg);
+}
+
+.terminal-output {
+  flex: 1;
+  overflow: auto;
+  padding: 10px 12px;
+  font-family: Consolas, "Courier New", monospace;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--ws-terminal-text);
+  background: var(--ws-terminal-bg);
+}
+
+.terminal-line {
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.terminal-input-row {
+  height: 40px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 12px;
+  border-top: 1px solid var(--ws-bottom-panel-border);
+  background: var(--ws-bottom-panel-bg);
+}
+
+.terminal-prompt {
+  color: var(--ws-terminal-prompt);
+  font-family: Consolas, "Courier New", monospace;
+  font-size: 13px;
+}
+
+.terminal-input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  outline: none;
+  background: transparent;
+  color: var(--ws-terminal-text);
+  font-family: Consolas, "Courier New", monospace;
+  font-size: 13px;
+}
+
+.terminal-input::placeholder {
+  color: var(--ws-terminal-muted);
 }
